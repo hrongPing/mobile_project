@@ -1,8 +1,9 @@
 <template>
-  <div id="app">
-    <router-view></router-view>
+  <div>
+    问答
   </div>
 </template>
+
 <script>
 export default {
   data () {
@@ -12,5 +13,6 @@ export default {
   }
 }
 </script>
-<style lang="scss">
+
+<style lang="scss" scoped>
 </style>
