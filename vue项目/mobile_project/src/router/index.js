@@ -18,6 +18,12 @@ const routes = [
   },
   {
     path: '/search', component: () => import('@/components/search/Search.vue')
+  },
+  {
+    path: '/article/:id',
+    name: 'article',
+    component: () => import('@/components/article/Article-Container.vue'),
+    props: true
   }
 ]
 

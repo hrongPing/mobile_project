@@ -2,6 +2,7 @@
   <div>
     <van-cell v-for="(v,i) in suggestList"
               :key="i"
+              @click="$emit('suggest',v)"
               icon="search">
       <div slot="title"
            v-html="handler(v)"></div>
@@ -30,14 +31,14 @@ export default {
     async loadGetSuggestions (value) {
       try {
         const { data } = await getSuggestions(value)
-        console.log(data)
+        // console.log(data)
         this.suggestList = data.data.options
       } catch (e) {
         this.$toast.fail('获取数据失败')
       }
     },
     handler (v) {
-      const color = '<span class="active">this.searchText</span>'
+      const color = `<span class="active">${this.searchText}</span>`
       const reg = new RegExp(this.searchText, 'gi')
       return v.replace(reg, color)
     }
