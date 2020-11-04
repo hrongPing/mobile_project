@@ -24,6 +24,9 @@ const routes = [
     name: 'article',
     component: () => import('@/components/article/Article-Container.vue'),
     props: true
+  },
+  {
+    path: '/userInfo', component: () => import('@/components/userInfo/index.vue')
   }
 ]
 

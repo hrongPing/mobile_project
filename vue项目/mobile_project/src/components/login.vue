@@ -84,7 +84,7 @@ export default {
         this.$store.commit('setToken', data.data)
         this.$router.back()
       } catch (e) {
-        console.log(e)
+        // console.log(e)
         if (e.response.status === 400) { this.$toast.fail('登录失败') } else {
           this.$toast.fail('登录失败请稍后再试')
         }
@@ -93,9 +93,9 @@ export default {
     async changeSmsBtn () {
       try {
         await this.$refs.loginFormRef.validate('mobile')
-        console.log('发送成功')
+        // console.log('发送成功')
       } catch (e) {
-        return console.log('发送失败', e)
+        return this.$toast.fail('发送失败,请稍后再试!')
       }
       this.isShowSendSmsBtn = true
       try {

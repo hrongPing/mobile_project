@@ -18,6 +18,7 @@
         </div>
         <div class="top_right">
           <van-button size="mini"
+                      to="/userInfo"
                       round>编辑资料</van-button>
         </div>
       </div>
@@ -68,7 +69,7 @@ export default {
   },
   async created () {
     const { data } = await loadUserInfo()
-    console.log(data.data)
+    // console.log(data.data)
     this.userInfo = data.data
   },
   methods: {

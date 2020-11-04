@@ -7,7 +7,8 @@ module.exports = {
       rootValue ({ file }) {
         return file.indexOf('van') !== -1 ? 37.5 : 75
       },
-      propList: ['*']
+      propList: ['*'],
+      exclude: ['markdown']
     }
   }
 }

@@ -1,5 +1,5 @@
 <template>
-  <div class="article-container">
+  <div class="article-container markdown-body">
     <!-- 导航栏 -->
     <van-nav-bar class="page-nav-bar"
                  left-arrow
@@ -9,16 +9,18 @@
 
     <div class="main-wrap">
       <!-- 加载中 -->
-      <div class="loading-wrap">
+      <div class="loading-wrap"
+           v-if="isLoading">
         <van-loading color="#3296fa"
                      vertical>加载中</van-loading>
       </div>
       <!-- /加载中 -->
 
       <!-- 加载完成-文章详情 -->
-      <div class="article-detail">
+      <div class="article-detail"
+           v-else-if="articleForm.title">
         <!-- 文章标题 -->
-        <h1 class="article-title">这是文章标题</h1>
+        <h1 class="article-title">{{articleForm.title}}</h1>
         <!-- /文章标题 -->
 
         <!-- 用户信息 -->
@@ -31,87 +33,162 @@
                      fit="cover"
                      src="https://img.yzcdn.cn/vant/cat.jpeg" />
           <div slot="title"
-               class="user-name">黑马头条号</div>
+               class="user-name">{{articleForm.aut_name}}</div>
           <div slot="label"
-               class="publish-date">14小时前</div>
-          <van-button class="follow-btn"
-                      type="info"
-                      color="#3296fa"
-                      round
-                      size="small"
-                      icon="plus">关注</van-button>
-          <!-- <van-button
-            class="follow-btn"
-            round
-            size="small"
-          >已关注</van-button> -->
+               class="publish-date">{{articleForm.pubdate | dateformat}}</div>
+          <follow-btn :followBtn='articleForm'></follow-btn>
         </van-cell>
         <!-- /用户信息 -->
 
         <!-- 文章内容 -->
-        <div class="article-content">这是文章内容</div>
+        <div class="article-content"
+             ref="article-content"
+             v-html="articleForm.content"></div>
         <van-divider>正文结束</van-divider>
+        <!-- 底部区域 -->
+        <div class="article-bottom">
+          <van-button class="comment-btn"
+                      type="default"
+                      round
+                      @click="show = true"
+                      size="small">写评论</van-button>
+          <van-icon name="comment-o"
+                    :badge="totalComment"
+                    color="#777" />
+          <collect-btn :isCollet='articleForm.is_collected'
+                       :articlId='articleForm.art_id'
+                       @collectArt='articleForm.is_collected=$event'></collect-btn>
+          <like-btn v-model="articleForm.attitude"
+                    :likeArtId='articleForm.art_id'></like-btn>
+          <van-icon name="share"
+                    color="#777777"></van-icon>
+        </div>
+        <!-- /底部区域 -->
+        <comment :sourceId='articleForm.art_id'
+                 @totalCount='totalComment=$event.total_count'></comment>
+        <van-popup v-model="show"
+                   position="bottom">
+          <input-comment :articleId='articleForm.art_id'
+                         @close-popup='show=$event'></input-comment>
+        </van-popup>
       </div>
       <!-- /加载完成-文章详情 -->
 
       <!-- 加载失败：404 -->
-      <div class="error-wrap">
+      <div class="error-wrap"
+           v-else-if="errStatus===404">
         <van-icon name="failure" />
         <p class="text">该资源不存在或已删除！</p>
       </div>
       <!-- /加载失败：404 -->
 
       <!-- 加载失败：其它未知错误（例如网络原因或服务端异常） -->
-      <div class="error-wrap">
+      <div class="error-wrap"
+           v-else>
         <van-icon name="failure" />
         <p class="text">内容加载失败！</p>
-        <van-button class="retry-btn">点击重试</van-button>
+        <van-button class="retry-btn"
+                    @click="loadgetArtContainer">点击重试</van-button>
       </div>
       <!-- /加载失败：其它未知错误（例如网络原因或服务端异常） -->
     </div>
-
-    <!-- 底部区域 -->
-    <div class="article-bottom">
-      <van-button class="comment-btn"
-                  type="default"
-                  round
-                  size="small">写评论</van-button>
-      <van-icon name="comment-o"
-                info="123"
-                color="#777" />
-      <van-icon color="#777"
-                name="star-o" />
-      <van-icon color="#777"
-                name="good-job-o" />
-      <van-icon name="share"
-                color="#777777"></van-icon>
-    </div>
-    <!-- /底部区域 -->
+    <van-popup v-model="isPopShow1"
+               position="bottom"
+               :style="{ height: '100%' }">
+      <reply-comment v-if="isPopShow1"></reply-comment>
+    </van-popup>
   </div>
 </template>
 
 <script>
+import { getArtContainer } from '@/api/article.js'
+import { ImagePreview } from 'vant'
+import followBtn from '@/components/followBtn.vue'
+import collectBtn from '@/components/Collectbtn.vue'
+import LikeBtn from '@/components/LikeBtn.vue'
+import Comment from '@/components/comment/Comment.vue'
+import InputComment from '@/components/comment/InputComment.vue'
+import ReplyComment from '@/components/comment/ReplyComment.vue'
+import { mapState } from 'vuex'
+
 export default {
   name: 'ArticleIndex',
-  components: {},
   props: {
     id: {
-      type: [Number, String],
+      type: [Number, String, Object],
       required: true
     }
   },
   data () {
-    return {}
+    return {
+      articleForm: {},
+      isLoading: true,
+      errStatus: 0,
+      show: false,
+      totalComment: 0,
+      replyShow: false,
+      isPopShow1: false
+    }
   },
-  computed: {},
-  watch: {},
-  created () {},
-  mounted () {},
-  methods: {}
+  components: {
+    followBtn,
+    collectBtn,
+    LikeBtn,
+    Comment,
+    InputComment,
+    ReplyComment
+  },
+  computed: {
+    ...mapState(['isPopShow'])
+  },
+  watch: {
+    isPopShow (newval, oldval) {
+      this.isPopShow1 = newval
+    }
+  },
+  created () {
+    this.loadgetArtContainer()
+  },
+  methods: {
+    async loadgetArtContainer () {
+      try {
+        const { data } = await getArtContainer(this.id)
+        // if (Math.random() > 0.5) {
+        //   throw new Error()
+        // }
+        this.articleForm = data.data
+        this.$store.commit('getArtId', this.articleForm.art_id)
+        setTimeout(() => {
+          this.getImagePreview()
+        }, 0)
+      } catch (e) {
+        if (e.responsee && e.response.status === 404) {
+          this.errStatus = 404
+        }
+      }
+      this.isLoading = false
+    },
+    getImagePreview () {
+      const images = []
+      const article = this.$refs['article-content']
+      const imgs = article.querySelectorAll('img')
+      // console.log(imgs)
+      imgs.forEach((v, i) => {
+        images.push(v.src)
+        v.onclick = () => {
+          ImagePreview({
+            images,
+            startPosition: i
+          })
+        }
+      })
+    }
+  }
 }
 </script>
 
 <style scoped lang="scss">
+@import "./markdown.css";
 .article-container {
   ::v-deep .van-nav-bar .van-icon {
     color: #fff;
@@ -199,7 +276,7 @@ export default {
     }
   }
 
-  .article-bottom {
+  ::v-deep .article-bottom {
     position: fixed;
     left: 0;
     right: 0;
